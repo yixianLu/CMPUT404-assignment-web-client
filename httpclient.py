@@ -42,28 +42,19 @@ class HTTPClient(object):
         return self.socket
 
     def get_code(self, data):
-        #print("\r\nbegin")
+        #get code from the response data
         data_list = data.splitlines()
         status = data_list[0]
         code = status.split()[1]
-        #print(code)
-        #print("end\r\n")
         return int(code)
 
     def get_headers(self,data):
-        #print("\r\nbegin")
         header = data.split("\r\n\r\n")[0]
-        #print(header)
-        #print("end\r\n")
         return header
 
     def get_body(self, data):
-        #print("\r\nbegin")
-        body = data.split("\r\n\r\n")[1]
-        #print(data)
-        #print(body)
-        #print("end\r\n")
-        
+        #get body from the response data
+        body = data.split("\r\n\r\n")[1]   
         return body
     
     def sendall(self, data):
@@ -85,6 +76,7 @@ class HTTPClient(object):
         return buffer.decode('utf-8')
     
     def parse_url(self,url):
+        # use urllib.parse.urlparse to get components
         o = urlparse(url)
         url_scheme = o.scheme
         url_path = o.path
@@ -106,55 +98,60 @@ class HTTPClient(object):
     def GET(self, url, args=None):
         code = 500
         body = ""
+        #parse url to get information
         path,port,hostname = self.parse_url(url)
-        method_handle = "GET "+path+ " HTTP/1.1\r\n"
-        host_handle = "Host: " + hostname+"\r\n"
-        content_handle = "Content-Type: application/x-www-form-urlencoded\r\n"
-        connect = "Connection: close\r\n\r\n"
-        total_request = method_handle+ host_handle +content_handle+connect
+        #use component to write a request
+        request = self.handle_content("get", path, hostname,args)
+        #use socket to connect
         s = self.connect(hostname,port)
-        self.sendall(total_request)
+        #send request
+        self.sendall(request)
+        #get response
         response = self.recvall(s)
         self.close()
         code = self.get_code(response)
-        #body_1 = self.get_headers(response)
-        body_2 = "\r\n"+self.get_body(response)
-        #body = body_1+body_2
-        body = body_2
-
-
+        body = "\r\n"+self.get_body(response)
 
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
         code = 500
         body = ""
-        #print("\r\nbegin")
         path,port,hostname = self.parse_url(url)
-        method_handle = "POST "+path+ " HTTP/1.1\r\n"
-        host_handle = "Host: " + hostname+"\r\n"
-        content_handle = "Content-Type: application/x-www-form-urlencoded\r\n"
-        if args:
-            args_str = urlencode(args)
-            content_length = len(args_str)
-        else:
-            content_length = 0
-            args_str = ""
-        content_length_handle = "Content-Length: "+str(content_length)+"\r\n"
-        connect = "Connection: close\r\n\r\n"
-        total_request = method_handle+ host_handle +content_handle+content_length_handle+connect+args_str
+        request = self.handle_content("post", path, hostname,args)
         s = self.connect(hostname,port)
-        self.sendall(total_request)
+        self.sendall(request)
         response = self.recvall(s)
         self.close()
         code = self.get_code(response)
-        body_1 = self.get_headers(response)
-        body_2 = "\r\n"+self.get_body(response)
-        body = body_2
-
-        #print("end\r\n")
+        body = "\r\n"+self.get_body(response)
 
         return HTTPResponse(code, body)
+    
+    def handle_content(self, method,path, hostname, args=None):
+        if method == "get":
+            method_handle = "GET "+path+ " HTTP/1.1\r\n"
+        elif method == "post":
+            method_handle = "POST "+path+ " HTTP/1.1\r\n"
+        else:
+            raise AssertionError
+        host_handle = "Host: " + hostname+"\r\n"
+        content_handle = "Content-Type: application/x-www-form-urlencoded\r\n"
+        connect = "Connection: close\r\n\r\n"
+        if args:
+            # use urllib.parse.urlencode to get the query atring of args
+            args_query = urlencode(args)
+            #get the length of the query
+            content_length = len(args_query)
+        else:
+            content_length = 0
+            args_query = ""
+        content_length_handle = "Content-Length: "+str(content_length)+"\r\n"
+        total_request = method_handle+ host_handle +content_handle+content_length_handle+connect+args_query
+
+        return total_request
+        
+
 
     def command(self, url, command="GET", args=None):
         if (command == "POST"):
