@@ -138,7 +138,8 @@ class HTTPClient(object):
         host_handle = "Host: " + hostname+"\r\n"
         content_handle = "Content-Type: application/x-www-form-urlencoded\r\n"
         connect = "Connection: close\r\n\r\n"
-        if args:
+        if args and method == "post":
+            # http get does not have request body
             # use urllib.parse.urlencode to get the query atring of args
             args_query = urlencode(args)
             #get the length of the query
