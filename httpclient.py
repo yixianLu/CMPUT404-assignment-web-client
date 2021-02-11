@@ -78,16 +78,13 @@ class HTTPClient(object):
     def parse_url(self,url):
         # use urllib.parse.urlparse to get components
         o = urlparse(url)
-        url_scheme = o.scheme
+        #url_scheme = o.scheme
         url_path = o.path
         url_port = o.port
         url_hostname = o.hostname
         
         if not url_port: 
-            if url_scheme !="https":
-                url_port = 80
-            else:
-                url_port = 443
+            url_port = 80
 
         if url_path == "":
             url_path = "/"
@@ -138,8 +135,8 @@ class HTTPClient(object):
         host_handle = "Host: " + hostname+"\r\n"
         content_handle = "Content-Type: application/x-www-form-urlencoded\r\n"
         connect = "Connection: close\r\n\r\n"
-        if args and method == "post":
-            # http get does not have request body
+        if args!= None:
+            # http get can still have query parameter
             # use urllib.parse.urlencode to get the query atring of args
             args_query = urlencode(args)
             #get the length of the query
