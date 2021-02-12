@@ -108,6 +108,8 @@ class HTTPClient(object):
         self.close()
         code = self.get_code(response)
         body = "\r\n"+self.get_body(response)
+        header = self.get_headers(response)
+        print("\r\n"+ header + "\r\n")
 
         return HTTPResponse(code, body)
 
@@ -122,6 +124,8 @@ class HTTPClient(object):
         self.close()
         code = self.get_code(response)
         body = "\r\n"+self.get_body(response)
+        header = self.get_headers(response)
+        print("\r\n"+ header + "\r\n")
 
         return HTTPResponse(code, body)
     
